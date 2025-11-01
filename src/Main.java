@@ -1,22 +1,32 @@
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.io.*;
 import java.util.concurrent.*;
 
 public class Main {
 
+    // Метод для копирования одного файла (без NIO)
     public static void copyFile(File sourceFile, File targetFile) throws IOException {
-        Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        try (FileInputStream fis = new FileInputStream(sourceFile);
+             FileOutputStream fos = new FileOutputStream(targetFile)) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                fos.write(buffer, bytesRead, bytesRead);
+            }
+        }
     }
 
+    // Последовательное копирование двух файлов
     public static void copyFilesSeq(File source1, File target1, File source2, File target2) throws IOException {
         copyFile(source1, target1);
         copyFile(source2, target2);
     }
 
+    // Параллельное копирование двух файлов
     public static void copyFilesParallel(File source1, File target1, File source2, File target2)
             throws InterruptedException, ExecutionException {
+
         ExecutorService threadPool = Executors.newFixedThreadPool(2);
 
         Callable<Void> copy1 = () -> {
